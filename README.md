@@ -2,8 +2,6 @@
 
 Digital cellophane
 
-![Icon](Icon-512.png)
-
 ## What does this do?
 
 It overlays a tint colour on your menu bar.
