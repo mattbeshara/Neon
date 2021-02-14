@@ -18,7 +18,7 @@
 import Cocoa
 
 extension NSApplication {
-  var menuBarHeight: CGFloat {
-    Self.shared.mainMenu?.menuBarHeight ?? 22
-  }
+    var menuBarHeight: CGFloat {
+        Self.shared.mainMenu?.menuBarHeight ?? 22
+    }
 }

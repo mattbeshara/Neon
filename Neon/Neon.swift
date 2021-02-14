@@ -18,71 +18,73 @@
 import Cocoa
 
 class Neon {
-  let defaults: UserDefaults = UserDefaults.standard
-  let colorKey: String = "color"
+    let defaults: UserDefaults = UserDefaults.standard
+    let colorKey: String = "color"
 
-  var windows: [NSWindow] = []
-  var screenChangeObserver: NSObjectProtocol?
+    var windows: [NSWindow] = []
+    var screenChangeObserver: NSObjectProtocol?
 
-  var color: NSColor {
-    get {
-      defaults.data(forKey: colorKey).flatMap {
-        try? NSKeyedUnarchiver.unarchivedObject(
-          ofClass: NSColor.self,
-          from: $0
-        )
+    var color: NSColor {
+        get {
+            defaults.data(forKey: colorKey).flatMap {
+                try? NSKeyedUnarchiver.unarchivedObject(
+                    ofClass: NSColor.self,
+                    from: $0
+                )
+            }
+            ?? .clear
+        }
+
+      set {
+          let data = NSKeyedArchiver.archivedData(withRootObject: newValue)
+            defaults.setValue(data, forKey: colorKey)
+            updateColor()
       }
-      ?? .clear
     }
 
-    set {
-      let data = NSKeyedArchiver.archivedData(withRootObject: newValue)
-      defaults.setValue(data, forKey: colorKey)
-      updateColor()
+    init() {
+        registerDefaults()
+        recreateWindows()
+        displayColorPanel()
+        observeScreenChanges()
     }
-  }
 
-  init() {
-    registerDefaults()
-    recreateWindows()
-    displayColorPanel()
-    observeScreenChanges()
-  }
-
-  func observeScreenChanges() {
-    screenChangeObserver = NotificationCenter.default.addObserver(
-      forName: NSApplication.didChangeScreenParametersNotification,
-      object: nil,
-      queue: .main) { _ in self.recreateWindows() }
-  }
-
-  func recreateWindows() {
-    windows.forEach { $0.orderOut(nil) }
-    windows = NSScreen.screens.map { $0.createMenuBarOverlayWindow() }
-    windows.forEach {
-      self.updateColor()
-      $0.orderFrontRegardless()
+    func observeScreenChanges() {
+        screenChangeObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main,
+            using: { _ in self.recreateWindows() }
+        )
     }
-  }
 
-  func displayColorPanel() {
-    let colorPanel = NSColorPanel.shared
-    colorPanel.color = color
-    colorPanel.orderFrontRegardless()
-    colorPanel.isContinuous = true
-    colorPanel.showsAlpha = true
-    colorPanel.setTarget(self)
-    colorPanel.setAction(#selector(setColor(from:)))
-  }
+    func recreateWindows() {
+        windows.forEach { $0.orderOut(nil) }
+        windows = NSScreen.screens.map { $0.createMenuBarOverlayWindow() }
+        windows.forEach {
+            self.updateColor()
+            $0.orderFrontRegardless()
+        }
+    }
 
-  @objc
-  func setColor(from panel: NSColorPanel) { color = panel.color }
+    func displayColorPanel() {
+        let colorPanel = NSColorPanel.shared
+        colorPanel.color = color
+        colorPanel.orderFrontRegardless()
+        colorPanel.isContinuous = true
+        colorPanel.showsAlpha = true
+        colorPanel.setTarget(self)
+        colorPanel.setAction(#selector(setColor(from:)))
+    }
 
-  func updateColor() { windows.forEach { $0.backgroundColor = color } }
+    @objc
+    func setColor(from panel: NSColorPanel) { color = panel.color }
 
-  func registerDefaults() {
-    let color = NSColor.green.withAlphaComponent(0.5)
-    let data = NSKeyedArchiver.archivedData(withRootObject: color)
-    defaults.register(defaults: [colorKey: data])
-  }
+    func updateColor() { windows.forEach { $0.backgroundColor = color } }
+
+    func registerDefaults() {
+        let color = NSColor.green.withAlphaComponent(0.5)
+        let data = NSKeyedArchiver.archivedData(withRootObject: color)
+        defaults.register(defaults: [colorKey: data])
+    }
 }
