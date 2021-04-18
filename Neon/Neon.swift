@@ -60,7 +60,15 @@ class Neon {
 
     func recreateWindows() {
         windows.forEach { $0.orderOut(nil) }
-        windows = NSScreen.screens.map { $0.createMenuBarOverlayWindow() }
+        windows = NSScreen.screens.compactMap {
+            $0.createMenuBarOverlayWindow()
+        }
+        if windows.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                self.recreateWindows()
+            }
+            return
+        }
         windows.forEach {
             self.updateColor()
             $0.orderFrontRegardless()

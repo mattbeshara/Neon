@@ -18,34 +18,42 @@
 import Cocoa
 
 extension NSScreen {
-    var menuBarFrame: NSRect {
-        NSRect(
-            x: 0,
-            y: frame.size.height - NSApp.menuBarHeight,
-            width: frame.size.width,
-            height: NSApp.menuBarHeight
-        )
+    private var menuBarFrame: NSRect? {
+        NSApp.menuBarHeight.map {
+            NSRect(
+              x: 0,
+              y: frame.size.height - $0,
+              width: frame.size.width,
+              height: $0
+            )
+        }
     }
 
-    func createMenuBarOverlayWindow() -> NSWindow {
-        let window = NSWindow(
-            contentRect: menuBarFrame,
-            styleMask: .borderless,
-            backing: .buffered,
-            defer: false,
-            screen: self
-        )
+    private func menuBarOverlayWindow() -> NSWindow? {
+        menuBarFrame.map {
+            NSWindow(
+              contentRect: $0,
+              styleMask: .borderless,
+              backing: .buffered,
+              defer: false,
+              screen: self
+            )
+        }
+    }
 
-      window.canHide = false
-      window.collectionBehavior = [
-        .canJoinAllSpaces,
-        .transient,
-        .ignoresCycle,
-        .fullScreenNone
-      ]
-      window.level = .screenSaver - 1
-      window.ignoresMouseEvents = true
+    func createMenuBarOverlayWindow() -> NSWindow? {
+        guard let window = menuBarOverlayWindow() else { return nil }
 
-      return window
+        window.canHide = false
+        window.collectionBehavior = [
+          .canJoinAllSpaces,
+          .transient,
+          .ignoresCycle,
+          .fullScreenNone
+        ]
+        window.level = .screenSaver - 1
+        window.ignoresMouseEvents = true
+
+        return window
     }
 }
